@@ -21,6 +21,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -61,6 +62,15 @@ class GameFragment : Fragment() {
             binding.wordText.text = viewModel.word.value
         }
 
+        // Setting up methods to execute when the game is finished
+        val gameFinishedObserver = Observer<Boolean> { hasFinished ->
+            if (hasFinished) {
+                gameFinished()
+                // Reset the isGameFinished variable
+                viewModel.onGameFinishComplete()
+            }
+        }
+
         binding.correctButton.setOnClickListener {
             viewModel.onCorrect()
         }
@@ -71,6 +81,9 @@ class GameFragment : Fragment() {
         // Setting up observers to observe score and word
         viewModel.score.observe(this, scoreObserver)
         viewModel.word.observe(this, wordObserver)
+
+        // Setting up observers to observe if the game is finished
+        viewModel.isGameFinished.observe(this, gameFinishedObserver)
 
         return binding.root
 
@@ -84,5 +97,6 @@ class GameFragment : Fragment() {
         // If viewModel.score value is an Integer, pass that Integer, if it is null, pass 0
         val action = GameFragmentDirections.actionGameToScore(viewModel.score.value ?: 0)
         findNavController(this).navigate(action)
+//        Toast.makeText(this.activity, "This game is now finished and you either suck or rule...", Toast.LENGTH_LONG).show()
     }
 }

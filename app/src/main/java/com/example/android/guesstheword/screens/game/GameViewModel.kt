@@ -7,11 +7,25 @@ import androidx.lifecycle.ViewModel
 
 class GameViewModel : ViewModel() {
 
-    // The current word
-    val word = MutableLiveData<String>()
+    // The current word (internal)
+    private val _word = MutableLiveData<String>()
+    // The current word (external)
+    val word: LiveData<String>
+        get() = _word
 
-    // The current score
-    val score = MutableLiveData<Int>()
+    // The current score (internal)
+    private val _score = MutableLiveData<Int>()
+    // The current score (external)
+    val score: LiveData<Int>
+        // We override the original getter method, to refer to the _score
+        get() = _score
+
+    // Game finished event (internal)
+    private val _isGameFinished = MutableLiveData<Boolean>()
+    // Game finished event (external)
+    val isGameFinished: LiveData<Boolean>
+        get() = _isGameFinished
+
 
     // The list of words - the front of the list is the next word to guess
     private lateinit var wordList: MutableList<String>
@@ -20,8 +34,9 @@ class GameViewModel : ViewModel() {
         Log.i("GameViewModel", "GameViewModel created!")
         resetList()
         nextWord()
-        score.value = 0
-        word.value = ""
+        _score.value = 0
+        _word.value = ""
+        _isGameFinished.value = false
     }
 
     override fun onCleared() {
@@ -65,22 +80,27 @@ class GameViewModel : ViewModel() {
     private fun nextWord() {
         //Select and remove a word from the list
         if (wordList.isEmpty()) {
-//            gameFinished()
+            _isGameFinished.value = true
         } else {
-            word.value = wordList.removeAt(0)
+            _word.value = wordList.removeAt(0)
         }
     }
 
     /** Methods for buttons presses **/
 
     fun onSkip() {
-        score.value = score.value?.minus(1)
+        _score.value = _score.value?.minus(1)
         nextWord()
     }
 
     fun onCorrect() {
-        score.value = score.value?.plus(1)
+        _score.value = _score.value?.plus(1)
         nextWord()
+    }
+
+    /** Method for resetting the isGameFinished variable once we have shown the Toast / navigated away **/
+    fun onGameFinishComplete() {
+        _isGameFinished.value = false
     }
 
 
