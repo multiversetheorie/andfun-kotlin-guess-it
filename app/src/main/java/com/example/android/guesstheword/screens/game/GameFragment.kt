@@ -17,6 +17,7 @@
 package com.example.android.guesstheword.screens.game
 
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -53,13 +54,17 @@ class GameFragment : Fragment() {
         Log.i("GameFragment", "Called ViewModelProviders.of")
         viewModel = ViewModelProviders.of(this).get(GameViewModel::class.java)
 
-        // Setting up methods to execute when the score or word changes
+        // Setting up methods to execute when the score, word or timer changes
         val scoreObserver = Observer<Int> { newScore ->
             binding.scoreText.text = viewModel.score.value.toString()
         }
 
         val wordObserver = Observer<String> { newWord ->
             binding.wordText.text = viewModel.word.value
+        }
+
+        val timeObserver = Observer<Long> { newTime ->
+            binding.timerText.text = DateUtils.formatElapsedTime(newTime)
         }
 
         // Setting up methods to execute when the game is finished
@@ -82,8 +87,11 @@ class GameFragment : Fragment() {
         viewModel.score.observe(this, scoreObserver)
         viewModel.word.observe(this, wordObserver)
 
-        // Setting up observers to observe if the game is finished
+        // Setting up observer to observe if the game is finished
         viewModel.isGameFinished.observe(this, gameFinishedObserver)
+
+        // Setting up observer to observe when the countdown timer changes
+        viewModel.currentTime.observe(this, timeObserver)
 
         return binding.root
 

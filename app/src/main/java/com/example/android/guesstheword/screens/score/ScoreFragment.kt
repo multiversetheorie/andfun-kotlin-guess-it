@@ -22,6 +22,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.android.guesstheword.R
@@ -31,6 +33,9 @@ import com.example.android.guesstheword.databinding.ScoreFragmentBinding
  * Fragment where the final score is shown, after the game is over
  */
 class ScoreFragment : Fragment() {
+
+    private lateinit var viewModel: ScoreViewModel
+    private lateinit var viewModelFactory: ScoreViewModelFactory
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -48,13 +53,34 @@ class ScoreFragment : Fragment() {
 
         // Get args using by navArgs property delegate
         val scoreFragmentArgs by navArgs<ScoreFragmentArgs>()
-        binding.scoreText.text = scoreFragmentArgs.score.toString()
-        binding.playAgainButton.setOnClickListener { onPlayAgain() }
+
+        viewModelFactory = ScoreViewModelFactory(scoreFragmentArgs.score)
+        viewModel = ViewModelProviders.of(this, viewModelFactory).get(ScoreViewModel::class.java)
+
+        // Setting up method to execute when the finalScore variable in the ViewModel changes
+        val finalScoreObserver = Observer<Int> { newFinalScore ->
+            binding.scoreText.text = viewModel.score.value.toString()
+        }
+
+        // Set OnClickListener on the Play Again button, so that clicking it calls the onPlayAgain method in the ViewModel
+        binding.playAgainButton.setOnClickListener { viewModel.onPlayAgain() }
+
+        // Setting up method to execute when the eventPlayAgain variable in the ViewModel changes
+        val eventPlayAgainObserver = Observer<Boolean> {playAgainClicked ->
+            // If playAgainClicked...
+            if (playAgainClicked) {
+                // ...then navigate to the GameFragment...
+                findNavController().navigate(ScoreFragmentDirections.actionRestart())
+                // ...and reset the eventPlayAgain variable to false.
+                viewModel.onPlayAgainComplete()
+            }
+        }
+
+        // Set up observers to observe score and eventPlayAgain
+        viewModel.score.observe(this, finalScoreObserver)
+        viewModel.eventPlayAgain.observe(this, eventPlayAgainObserver)
 
         return binding.root
     }
 
-    private fun onPlayAgain() {
-        findNavController().navigate(ScoreFragmentDirections.actionRestart())
-    }
 }

@@ -1,5 +1,6 @@
 package com.example.android.guesstheword.screens.game
 
+import android.os.CountDownTimer
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -26,6 +27,23 @@ class GameViewModel : ViewModel() {
     val isGameFinished: LiveData<Boolean>
         get() = _isGameFinished
 
+    // Current time remaining (internal)
+    private val _currentTime = MutableLiveData<Long>()
+    // Current time remaining (external)
+    val currentTime: LiveData<Long>
+        get() = _currentTime
+
+    companion object {
+        // These represent different important times
+        // This is when the game is over
+        const val DONE = 0L
+        // This is the number of milliseconds in a second
+        const val ONE_SECOND = 1000L
+        // This is the total time of the game
+        const val COUNTDOWN_TIME = 30000L
+    }
+
+    private val timer: CountDownTimer
 
     // The list of words - the front of the list is the next word to guess
     private lateinit var wordList: MutableList<String>
@@ -37,10 +55,23 @@ class GameViewModel : ViewModel() {
         _score.value = 0
         _word.value = ""
         _isGameFinished.value = false
+
+        timer = object : CountDownTimer(COUNTDOWN_TIME, ONE_SECOND) {
+            override fun onTick(millisUntilFinished: Long) {
+                _currentTime.value = (millisUntilFinished / ONE_SECOND)
+            }
+
+            override fun onFinish() {
+                _currentTime.value = DONE
+                _isGameFinished.value = true
+            }
+        }
+        timer.start()
     }
 
     override fun onCleared() {
         super.onCleared()
+        timer.cancel()
         Log.i("GameViewModel", "GameViewModel destroyed! :(")
     }
 
@@ -78,9 +109,10 @@ class GameViewModel : ViewModel() {
      * Moves to the next word in the list
      */
     private fun nextWord() {
-        //Select and remove a word from the list
+        // Select and remove a word from the list
         if (wordList.isEmpty()) {
-            _isGameFinished.value = true
+//            _isGameFinished.value = true
+            resetList()
         } else {
             _word.value = wordList.removeAt(0)
         }
