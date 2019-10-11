@@ -51,8 +51,12 @@ class GameFragment : Fragment() {
                 false
         )
 
-        Log.i("GameFragment", "Called ViewModelProviders.of")
+        // Get GameViewModel from ViewModelProviders
         viewModel = ViewModelProviders.of(this).get(GameViewModel::class.java)
+        Log.i("GameFragment", "Called ViewModelProviders.of")
+
+        // Pass the viewmodel into binding ("Letting binding know about the viewmodel")
+        binding.gameViewModel = viewModel
 
         // Setting up methods to execute when the score, word or timer changes
         val scoreObserver = Observer<Int> { newScore ->
@@ -76,12 +80,13 @@ class GameFragment : Fragment() {
             }
         }
 
-        binding.correctButton.setOnClickListener {
-            viewModel.onCorrect()
-        }
-        binding.skipButton.setOnClickListener {
-            viewModel.onSkip()
-        }
+        // Set OnClickListener on the Skip and Got It buttons, so that clicking them calls the appropriate methods in the ViewModel
+//        binding.correctButton.setOnClickListener {
+//            viewModel.onCorrect()
+//        }
+//        binding.skipButton.setOnClickListener {
+//            viewModel.onSkip()
+//        }
 
         // Setting up observers to observe score and word
         viewModel.score.observe(this, scoreObserver)

@@ -54,8 +54,12 @@ class ScoreFragment : Fragment() {
         // Get args using by navArgs property delegate
         val scoreFragmentArgs by navArgs<ScoreFragmentArgs>()
 
+        // Setting up the custom factory for our viewModel and getting the viewModel from ViewModelProviders
         viewModelFactory = ScoreViewModelFactory(scoreFragmentArgs.score)
         viewModel = ViewModelProviders.of(this, viewModelFactory).get(ScoreViewModel::class.java)
+
+        // Pass the viewModel into binding ("Letting binding know about the viewModel")
+        binding.scoreViewModel = viewModel
 
         // Setting up method to execute when the finalScore variable in the ViewModel changes
         val finalScoreObserver = Observer<Int> { newFinalScore ->
@@ -63,7 +67,7 @@ class ScoreFragment : Fragment() {
         }
 
         // Set OnClickListener on the Play Again button, so that clicking it calls the onPlayAgain method in the ViewModel
-        binding.playAgainButton.setOnClickListener { viewModel.onPlayAgain() }
+        // binding.playAgainButton.setOnClickListener { viewModel.onPlayAgain() }
 
         // Setting up method to execute when the eventPlayAgain variable in the ViewModel changes
         val eventPlayAgainObserver = Observer<Boolean> {playAgainClicked ->
