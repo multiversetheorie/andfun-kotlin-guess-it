@@ -1,12 +1,27 @@
 package com.example.android.guesstheword.screens.game
 
 import android.os.CountDownTimer
+import android.text.format.DateUtils
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 
+// Warning buzz patterns
+private val CORRECT_BUZZ_PATTERN = longArrayOf(100, 100, 100, 100, 100, 100)
+private val PANIC_BUZZ_PATTERN = longArrayOf(0, 200)
+private val GAME_OVER_BUZZ_PATTERN = longArrayOf(0, 2000)
+private val NO_BUZZ_PATTERN = longArrayOf(0)
+
 class GameViewModel : ViewModel() {
+
+    enum class BuzzType(val pattern: LongArray) {
+        CORRECT(CORRECT_BUZZ_PATTERN),
+        GAME_OVER(GAME_OVER_BUZZ_PATTERN),
+        COUNTDOWN_PANIC(PANIC_BUZZ_PATTERN),
+        NO_BUZZ(NO_BUZZ_PATTERN)
+    }
 
     // The current word (internal)
     private val _word = MutableLiveData<String>()
@@ -32,6 +47,16 @@ class GameViewModel : ViewModel() {
     // Current time remaining (external)
     val currentTime: LiveData<Long>
         get() = _currentTime
+    // Current time transformed from Long to String
+    val currentTimeString = Transformations.map(currentTime,{ time ->
+        DateUtils.formatElapsedTime(time)
+    })
+
+    // Buzz event (internal)
+    private val _eventBuzz = MutableLiveData<BuzzType>()
+    // Buzz event (external)
+    val eventBuzz: LiveData<BuzzType>
+        get() = _eventBuzz
 
     companion object {
         // These represent different important times
@@ -40,7 +65,9 @@ class GameViewModel : ViewModel() {
         // This is the number of milliseconds in a second
         const val ONE_SECOND = 1000L
         // This is the total time of the game
-        const val COUNTDOWN_TIME = 30000L
+        const val COUNTDOWN_TIME = 20000L
+        // The phone will start buzzing each second from this time
+        const val COUNTDOWN_PANIC_SECONDS = 10L
     }
 
     private val timer: CountDownTimer
@@ -53,16 +80,21 @@ class GameViewModel : ViewModel() {
         resetList()
         nextWord()
         _score.value = 0
-        _word.value = ""
+//        _word.value = ""
         _isGameFinished.value = false
 
         timer = object : CountDownTimer(COUNTDOWN_TIME, ONE_SECOND) {
+
             override fun onTick(millisUntilFinished: Long) {
                 _currentTime.value = (millisUntilFinished / ONE_SECOND)
+                if (millisUntilFinished / ONE_SECOND <= COUNTDOWN_PANIC_SECONDS) {
+                    _eventBuzz.value = BuzzType.COUNTDOWN_PANIC
+                }
             }
 
             override fun onFinish() {
                 _currentTime.value = DONE
+                _eventBuzz.value = BuzzType.GAME_OVER
                 _isGameFinished.value = true
             }
         }
@@ -127,12 +159,17 @@ class GameViewModel : ViewModel() {
 
     fun onCorrect() {
         _score.value = _score.value?.plus(1)
+        _eventBuzz.value = BuzzType.CORRECT
         nextWord()
     }
 
     /** Method for resetting the isGameFinished variable once we have shown the Toast / navigated away **/
     fun onGameFinishComplete() {
         _isGameFinished.value = false
+    }
+
+    fun onBuzzComplete() {
+        _eventBuzz.value = BuzzType.NO_BUZZ
     }
 
 

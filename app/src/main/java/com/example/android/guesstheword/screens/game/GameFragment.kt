@@ -16,13 +16,17 @@
 
 package com.example.android.guesstheword.screens.game
 
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.content.getSystemService
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -57,19 +61,21 @@ class GameFragment : Fragment() {
 
         // Pass the viewmodel into binding ("Letting binding know about the viewmodel")
         binding.gameViewModel = viewModel
+        // Set this Fragment as the LifeCycleOwner of our data binding object
+        binding.setLifecycleOwner(this)
 
         // Setting up methods to execute when the score, word or timer changes
-        val scoreObserver = Observer<Int> { newScore ->
-            binding.scoreText.text = viewModel.score.value.toString()
-        }
+//        val scoreObserver = Observer<Int> { newScore ->
+//            binding.scoreText.text = viewModel.score.value.toString()
+//        }
 
-        val wordObserver = Observer<String> { newWord ->
-            binding.wordText.text = viewModel.word.value
-        }
+//        val wordObserver = Observer<String> { newWord ->
+//            binding.wordText.text = viewModel.word.value
+//        }
 
-        val timeObserver = Observer<Long> { newTime ->
-            binding.timerText.text = DateUtils.formatElapsedTime(newTime)
-        }
+//        val timeObserver = Observer<Long> { newTime ->
+//            binding.timerText.text = DateUtils.formatElapsedTime(newTime)
+//        }
 
         // Setting up methods to execute when the game is finished
         val gameFinishedObserver = Observer<Boolean> { hasFinished ->
@@ -77,6 +83,14 @@ class GameFragment : Fragment() {
                 gameFinished()
                 // Reset the isGameFinished variable
                 viewModel.onGameFinishComplete()
+            }
+        }
+
+        // Setting up methods to execute when the eventBuzz variable changes
+        val buzzEventObserver = Observer<GameViewModel.BuzzType> { buzzType ->
+            if (buzzType != GameViewModel.BuzzType.NO_BUZZ) {
+                buzz(buzzType.pattern)
+                viewModel.onBuzzComplete()
             }
         }
 
@@ -89,14 +103,17 @@ class GameFragment : Fragment() {
 //        }
 
         // Setting up observers to observe score and word
-        viewModel.score.observe(this, scoreObserver)
-        viewModel.word.observe(this, wordObserver)
+//        viewModel.score.observe(this, scoreObserver)
+//        viewModel.word.observe(this, wordObserver)
 
         // Setting up observer to observe if the game is finished
         viewModel.isGameFinished.observe(this, gameFinishedObserver)
 
         // Setting up observer to observe when the countdown timer changes
-        viewModel.currentTime.observe(this, timeObserver)
+//        viewModel.currentTime.observe(this, timeObserver)
+
+        // Setting up observer to observe if BuzzType changes
+        viewModel.eventBuzz.observe(this, buzzEventObserver)
 
         return binding.root
 
@@ -111,5 +128,19 @@ class GameFragment : Fragment() {
         val action = GameFragmentDirections.actionGameToScore(viewModel.score.value ?: 0)
         findNavController(this).navigate(action)
 //        Toast.makeText(this.activity, "This game is now finished and you either suck or rule...", Toast.LENGTH_LONG).show()
+    }
+
+    // Buzzer function
+    private fun buzz(pattern: LongArray) {
+        val buzzer = activity?.getSystemService<Vibrator>()
+
+        buzzer?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                buzzer.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                //deprecated in API 26
+                buzzer.vibrate(pattern, -1)
+            }
+        }
     }
 }

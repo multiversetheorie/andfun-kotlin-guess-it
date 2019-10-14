@@ -60,11 +60,13 @@ class ScoreFragment : Fragment() {
 
         // Pass the viewModel into binding ("Letting binding know about the viewModel")
         binding.scoreViewModel = viewModel
+        // Set this Fragment as the LifeCycleOwner of our data binding object
+        binding.setLifecycleOwner(this)
 
         // Setting up method to execute when the finalScore variable in the ViewModel changes
-        val finalScoreObserver = Observer<Int> { newFinalScore ->
-            binding.scoreText.text = viewModel.score.value.toString()
-        }
+//        val finalScoreObserver = Observer<Int> { newFinalScore ->
+//            binding.scoreText.text = viewModel.score.value.toString()
+//        }
 
         // Set OnClickListener on the Play Again button, so that clicking it calls the onPlayAgain method in the ViewModel
         // binding.playAgainButton.setOnClickListener { viewModel.onPlayAgain() }
@@ -81,7 +83,7 @@ class ScoreFragment : Fragment() {
         }
 
         // Set up observers to observe score and eventPlayAgain
-        viewModel.score.observe(this, finalScoreObserver)
+//        viewModel.score.observe(this, finalScoreObserver)
         viewModel.eventPlayAgain.observe(this, eventPlayAgainObserver)
 
         return binding.root
